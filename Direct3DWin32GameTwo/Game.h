@@ -57,6 +57,12 @@ private:
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
 
+    //Textures
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_texture;
+
+    //Buffer 
+    wchar_t                                             szFile[260];
+
     // Rendering loop timer.
     DX::StepTimer                           m_timer;
 };

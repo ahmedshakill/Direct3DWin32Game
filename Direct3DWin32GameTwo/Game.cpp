@@ -13,7 +13,7 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game() noexcept(false)
 {
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_R8G8B8A8_UNORM);
     m_deviceResources->RegisterDeviceNotify(this);
 }
 
@@ -21,6 +21,27 @@ Game::Game() noexcept(false)
 void Game::Initialize(HWND window, int width, int height)
 {
     m_deviceResources->SetWindow(window, width, height);
+
+
+    // Get Texture file name using filedialogue
+    {
+        OPENFILENAME ofn = {};
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(OPENFILENAME);
+        ofn.hwndOwner = window;
+        ofn.lpstrFile = szFile;
+
+        szFile[0] = '\0';
+        ofn.nMaxFile = sizeof(szFile);
+        ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFileTitle = NULL;
+        ofn.nMaxFileTitle = 0;
+        ofn.lpstrInitialDir = NULL;
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+        GetOpenFileNameW(&ofn);
+    }
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -161,6 +182,8 @@ void Game::CreateDeviceDependentResources()
 
     // TODO: Initialize device dependent objects here (independent of window size).
     device;
+
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, L"cat.jpg",nullptr, m_texture.GetAddressOf()));
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -172,6 +195,7 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     // TODO: Add Direct3D resource cleanup here.
+    m_texture.Reset();
 }
 
 void Game::OnDeviceRestored()

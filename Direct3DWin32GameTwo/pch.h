@@ -15,9 +15,9 @@
 #define NOMINMAX
 
 // DirectX apps don't need GDI
-#define NODRAWTEXT
-#define NOGDI
-#define NOBITMAP
+//#define NODRAWTEXT
+//#define NOGDI
+//#define NOBITMAP
 
 // Include <mcx.h> if you need this
 #define NOMCX
@@ -30,7 +30,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
+#include <commdlg.h>
 #include <wrl/client.h>
 
 #include <d3d11_1.h>
@@ -52,6 +52,26 @@
 #ifdef _DEBUG
 #include <dxgidebug.h>
 #endif
+
+#include "BufferHelpers.h"
+#include "CommonStates.h"
+#include "DDSTextureLoader.h"
+#include "DirectXHelpers.h"
+#include "Effects.h"
+#include "GamePad.h"
+#include "GeometricPrimitive.h"
+#include "GraphicsMemory.h"
+#include "Keyboard.h"
+#include "Model.h"
+#include "Mouse.h"
+#include "PostProcess.h"
+#include "PrimitiveBatch.h"
+#include "ScreenGrab.h"
+#include "SimpleMath.h"
+#include "SpriteBatch.h"
+#include "SpriteFont.h"
+#include "VertexTypes.h"
+#include "WICTextureLoader.h"
 
 namespace DX
 {
