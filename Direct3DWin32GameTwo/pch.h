@@ -48,6 +48,7 @@
 #include <iterator>
 #include <memory>
 #include <stdexcept>
+#include <sstream>
 
 #ifdef _DEBUG
 #include <dxgidebug.h>
@@ -73,6 +74,7 @@
 #include "VertexTypes.h"
 #include "WICTextureLoader.h"
 
+#include "FindMedia.h"
 namespace DX
 {
     // Helper class for COM exceptions
