@@ -11,6 +11,8 @@ using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 
+using namespace DirectX::SimpleMath;
+
 Game::Game() noexcept(false)
 {
     m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -29,6 +31,7 @@ void Game::Initialize(HWND window, int width, int height)
     shape = Shape(100.0f,100.0f,22.0f);
 
     m_deviceResources->CreateDeviceResources();
+    if (displayShape) { updateTexture(); }
     CreateDeviceDependentResources();
 
     m_deviceResources->CreateWindowSizeDependentResources();
@@ -56,13 +59,10 @@ void Game::Tick()
 
 
 
-void Game::updateTexture(float x,float y)
+void Game::updateTexture(/*float x,float y*/)
 {
-
-
     auto device = m_deviceResources->GetD3DDevice();
     //auto context = m_deviceResources->GetD3DDeviceContext();
-
     ComPtr<ID3D11Resource> resource;
 
     // Get Texture file name using filedialogue
@@ -87,6 +87,7 @@ void Game::updateTexture(float x,float y)
         };
 
     }
+
     if(textureSelected)
     {
 
@@ -110,11 +111,7 @@ void Game::updateTexture(float x,float y)
         m_screenPos.y = float(windowSize.bottom) / 2.f;
     }
 
-    x;
-    y;
-
 }
-
 
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
@@ -143,25 +140,20 @@ void Game::Update(DX::StepTimer const& timer)
         if (mouse.x >= shape.triangle.left && mouse.x < shape.triangle.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
         {          
             shapeType = ShapeType::Triangle;
-            updateTexture((float)mouse.x, (float)mouse.y);
+            displayShape = true;
+            updateTexture(/*(float)mouse.x, (float)mouse.y*/);
+
         }
         if (mouse.x >= shape.square.left+10 && mouse.x < shape.square.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
         {
             shapeType = ShapeType::Square;
-            std::wstringstream oss;
-            oss << "Square\n";
-            std::wstring str = oss.str();
-            OutputDebugStringW(str.c_str());
-            //updateTexture((float)mouse.x, (float)mouse.y);
+            displayShape = true;
+            updateTexture();
         }
         if (mouse.x >= shape.circle.left+10 && mouse.x < shape.circle.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
         {
-            std::wstringstream oss;
-            oss << "Circle\n";
-            std::wstring str = oss.str();
-            OutputDebugStringW(str.c_str());
             shapeType = ShapeType::Circle;
-            //updateTexture((float)mouse.x, (float)mouse.y);
+            displayShape = true;
         }
     }
     
@@ -183,26 +175,68 @@ void Game::Render()
 
     m_deviceResources->PIXBeginEvent(L"Render");
     auto context = m_deviceResources->GetD3DDeviceContext();
-
+    auto device = m_deviceResources->GetD3DDevice();
     // TODO: Add your rendering code here.
     context;
 
     //float time = float(m_timer.GetTotalSeconds());
 
-    m_spriteBatch->Begin();
-
-    m_spriteBatch->Draw(m_background.Get(), m_fullscreenRect);
-
-    m_font->DrawString(m_spriteBatch.get(), L"Triangle", XMFLOAT2(shape.triangle.left, shape.up), Colors::GreenYellow);
-    m_font->DrawString(m_spriteBatch.get(), L"Square", XMFLOAT2(shape.square.left, shape.up), Colors::GreenYellow);
-    m_font->DrawString(m_spriteBatch.get(), L"Circle", XMFLOAT2(shape.circle.left, shape.up), Colors::GreenYellow);
-
-    if (textureSelected == true)
+    //draw buttons
     {
-        m_spriteBatch->Draw(m_texture.Get(), m_screenPos, nullptr,
-            Colors::White, 0.f, m_origin);
+        m_spriteBatch->Begin();
+
+        m_spriteBatch->Draw(m_background.Get(), m_fullscreenRect);
+
+        m_font->DrawString(m_spriteBatch.get(), L"Triangle", XMFLOAT2(shape.triangle.left, shape.up), Colors::GreenYellow);
+        m_font->DrawString(m_spriteBatch.get(), L"Square",   XMFLOAT2(shape.square.left, shape.up),   Colors::GreenYellow);
+        m_font->DrawString(m_spriteBatch.get(), L"Circle",   XMFLOAT2(shape.circle.left, shape.up),   Colors::GreenYellow);
+
+        m_spriteBatch->End();
     }
-    m_spriteBatch->End();
+
+    //Tutorial SimpleRendering
+    if (displayShape)
+    {
+        m_effect->SetTextureEnabled(true);
+        m_effect->SetTexture(m_texture.Get());
+        DX::ThrowIfFailed(CreateInputLayoutFromEffect<VertexType>(device, m_effect.get(),
+            m_inputLayout.ReleaseAndGetAddressOf())
+        );
+
+        context->OMSetBlendState(m_states->Opaque(), nullptr, 0xffffffff);
+        context->OMSetDepthStencilState(m_states->DepthNone(), 0);
+        context->RSSetState(m_states->CullNone());
+
+        m_effect->Apply(context);
+
+        auto sampler = m_states->LinearClamp();
+        context->PSSetSamplers(0, 1, &sampler);
+
+        context->IASetInputLayout(m_inputLayout.Get());
+
+        if(shapeType==ShapeType::Triangle)
+        { 
+            m_batch->Begin();
+            VertexPositionTexture v1(Vector3(400.f, 150.f, 0.f), Vector2(0.5f,0));
+            VertexPositionTexture v2(Vector3(600.f, 450.f, 0.f), Vector2(1,1));
+            VertexPositionTexture v3(Vector3(200.f, 450.f, 0.f), Vector2(0,1));
+            m_batch->DrawTriangle(v1, v2, v3);
+            m_batch->End();
+        }
+        
+        if (shapeType == ShapeType::Square)
+        {
+            m_batch->Begin();
+            VertexPositionTexture v1(Vector3(200.f, 150.f, 0.f), Vector2(0, 0));
+            VertexPositionTexture v2(Vector3(600.f, 150.f, 0.f), Vector2(0, 1));
+            VertexPositionTexture v3(Vector3(600.f, 450.f, 0.f), Vector2(1, 1));
+            VertexPositionTexture v4(Vector3(200.f, 450.f, 0.f), Vector2(1, 0));
+            m_batch->DrawQuad(v1, v2, v3, v4);
+            m_batch->End();
+        }
+
+    }
+    //End SimpleRendering
 
     m_deviceResources->PIXEndEvent();
 
@@ -289,62 +323,44 @@ void Game::CreateDeviceDependentResources()
     auto context = m_deviceResources->GetD3DDeviceContext();
 
     // TODO: Initialize device dependent objects here (independent of window size).
-    
-    m_spriteBatch   = std::make_unique<SpriteBatch>(context);
-    m_states        = std::make_unique<CommonStates>(device);
-    //ComPtr<ID3D11Resource> resource;
+    m_states = std::make_unique<CommonStates>(device);
+    m_effect = std::make_unique<BasicEffect>(device);
+    m_spriteBatch = std::make_unique<SpriteBatch>(context);
     ComPtr<ID3D11Resource> resourc2;
 
-
+    // Font
     wchar_t fontFilePath[MAX_PATH];
     DX::FindMediaFile(fontFilePath, MAX_PATH, L"SegoeUI_18.spritefont");
     m_font = std::make_unique<SpriteFont>(device, fontFilePath);
-
-
-    // Get Texture file name using filedialogue
-    //{
-    //    OPENFILENAME ofn = {};
-    //    ZeroMemory(&ofn, sizeof(ofn));
-    //    ofn.lStructSize = sizeof(OPENFILENAME);
-    //    ofn.hwndOwner = nullptr;//window;
-    //    ofn.lpstrFile = szFile;
-
-    //    szFile[0] = '\0';
-    //    ofn.nMaxFile = sizeof(szFile);
-    //    ofn.lpstrFilter = L"All\0*.*\0Text\0*.TXT\0";
-    //    ofn.nFilterIndex = 1;
-    //    ofn.lpstrFileTitle = NULL;
-    //    ofn.nMaxFileTitle = 0;
-    //    ofn.lpstrInitialDir = NULL;
-    //    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    //    GetOpenFileNameW(&ofn);
-    //}
-
-    //DX::ThrowIfFailed(CreateWICTextureFromFile(device, szFile,
-    //    resource.GetAddressOf(),
-    //    m_texture.ReleaseAndGetAddressOf()));
-
-
+    
+    // Background Texture
     wchar_t strFilePath[MAX_PATH];
     DX::FindMediaFile(strFilePath, MAX_PATH, L"sunset.jpg");
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, strFilePath, 
         resourc2.GetAddressOf(),
-        m_background.ReleaseAndGetAddressOf()));
+        m_background.ReleaseAndGetAddressOf())
+    );
 
+
+
+    /*if (showTriangle)
+    {
+        m_effect->SetTextureEnabled(true);
+        m_effect->SetTexture(m_texture.Get());
+        DX::ThrowIfFailed(CreateInputLayoutFromEffect<VertexType>(device, m_effect.get(),
+            m_inputLayout.ReleaseAndGetAddressOf())
+        );
+    }*/
+    m_batch = std::make_unique<PrimitiveBatch<VertexType>>(context);
 
     /*ComPtr<ID3D11Texture2D> cat;
     ComPtr<ID3D11Texture2D> backGround;
-
     DX::ThrowIfFailed(resource.As(&cat));
     DX::ThrowIfFailed(resourc2.As(&backGround));
-
     CD3D11_TEXTURE2D_DESC catDesc;
     cat->GetDesc(&catDesc);
-    
     m_origin.x =float(catDesc.Width / 2);
-    m_origin.y =float(catDesc.Height / 2);*/
-
+    m_origin.y =float(catDesc.Height / 2);
     /*m_tileRect.left = catDesc.Width * 2;
     m_tileRect.right = catDesc.Width * 6;
     m_tileRect.top = catDesc.Height * 2;
@@ -359,9 +375,21 @@ void Game::CreateWindowSizeDependentResources()
     m_screenPos.x = float(size.right) /  2.f;
     m_screenPos.y = float(size.bottom) / 2.f;
 
+    // use pixel coordinates
+    SimpleMath::Matrix proj = Matrix::CreateScale(2.f / float(size.right),
+        -2.f / float(size.bottom), 1.f)
+        * Matrix::CreateTranslation(-1.f, 1.f, 0.f);
+    m_effect->SetProjection(proj);
+
     m_fullscreenRect = m_deviceResources->GetOutputSize();
+
+  /*
+    //The basic game loop already includes the call to set the SetViewport state 
+    //that tells Direct3D how to map the '-1 to +1' coordinates to the pixel size 
+    //of your render target.
     auto viewport = m_deviceResources->GetScreenViewport();
-    m_spriteBatch->SetViewport(viewport);
+    m_spriteBatch->SetViewport(viewport);*/
+
 }
 
 void Game::OnDeviceLost()
@@ -371,6 +399,9 @@ void Game::OnDeviceLost()
     m_spriteBatch.reset();
     m_states.reset();
     m_background.Reset();
+    m_effect.reset();
+    m_batch.reset();
+    m_inputLayout.Reset();
 }
 
 void Game::OnDeviceRestored()

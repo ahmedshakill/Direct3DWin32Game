@@ -99,7 +99,7 @@ private:
     void CreateWindowSizeDependentResources();
 
 
-    void updateTexture(float x, float y);
+    void updateTexture(/*float x, float y*/);
     
 
     // Device resources.
@@ -109,6 +109,12 @@ private:
     std::unique_ptr<DirectX::Mouse>         m_mouse;
 
     std::unique_ptr<DirectX::CommonStates>  m_states;
+    std::unique_ptr<DirectX::BasicEffect>   m_effect;
+    
+    using VertexType = DirectX::VertexPositionTexture;
+    
+    std::unique_ptr<DirectX::PrimitiveBatch<VertexType>> m_batch;
+    Microsoft::WRL::ComPtr<ID3D11InputLayout>   m_inputLayout;
 
     //Textures
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_texture;
@@ -134,6 +140,7 @@ private:
     //Buffer 
     wchar_t                                             szFile[260];
     bool                                                textureSelected = false;
+    bool                                                displayShape = false;
     ShapeType                                           shapeType;
     Shape                                               shape;
 
