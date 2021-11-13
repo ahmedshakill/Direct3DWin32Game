@@ -28,7 +28,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_mouse = std::make_unique<Mouse>();
     m_mouse->SetWindow(window);
 
-    shape = Shape(100.0f,100.0f,22.0f);
+    shape = Shape(100.0f,100.0f,24.0f);
 
     m_deviceResources->CreateDeviceResources();
     if (displayShape) { updateTexture(); }
@@ -84,7 +84,12 @@ void Game::updateTexture(/*float x,float y*/)
 
         if (GetOpenFileNameW(&ofn)) {
             textureSelected = true;
-        };
+        }
+        else
+        {
+            textureSelected = false;
+        }
+
 
     }
 
@@ -185,11 +190,11 @@ void Game::Render()
     {
         m_spriteBatch->Begin();
 
-        m_spriteBatch->Draw(m_background.Get(), m_fullscreenRect);
+        //m_spriteBatch->Draw(m_background.Get(), m_fullscreenRect);
 
         m_font->DrawString(m_spriteBatch.get(), L"Triangle", XMFLOAT2(shape.triangle.left, shape.up), Colors::GreenYellow);
         m_font->DrawString(m_spriteBatch.get(), L"Square",   XMFLOAT2(shape.square.left, shape.up),   Colors::GreenYellow);
-        m_font->DrawString(m_spriteBatch.get(), L"Circle",   XMFLOAT2(shape.circle.left, shape.up),   Colors::GreenYellow);
+        //m_font->DrawString(m_spriteBatch.get(), L"Circle",   XMFLOAT2(shape.circle.left, shape.up),   Colors::GreenYellow);
 
         m_spriteBatch->End();
     }
@@ -228,11 +233,16 @@ void Game::Render()
         {
             m_batch->Begin();
             VertexPositionTexture v1(Vector3(200.f, 150.f, 0.f), Vector2(0, 0));
-            VertexPositionTexture v2(Vector3(600.f, 150.f, 0.f), Vector2(0, 1));
+            VertexPositionTexture v2(Vector3(600.f, 150.f, 0.f), Vector2(1, 0));
             VertexPositionTexture v3(Vector3(600.f, 450.f, 0.f), Vector2(1, 1));
-            VertexPositionTexture v4(Vector3(200.f, 450.f, 0.f), Vector2(1, 0));
+            VertexPositionTexture v4(Vector3(200.f, 450.f, 0.f), Vector2(0, 1));
             m_batch->DrawQuad(v1, v2, v3, v4);
             m_batch->End();
+        }
+
+        if (shapeType == ShapeType::Circle)
+        {
+           
         }
 
     }
