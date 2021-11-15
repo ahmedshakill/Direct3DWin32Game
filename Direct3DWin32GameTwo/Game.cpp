@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include "Game.h"
+#include <wincodec.h>
 
 extern void ExitGame() noexcept;
 
@@ -28,7 +29,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_mouse = std::make_unique<Mouse>();
     m_mouse->SetWindow(window);
 
-    shape = Shape(100.0f,100.0f,24.0f);
+    button = Button(100.0f,100.0f,24.0f);
 
     m_deviceResources->CreateDeviceResources();
     if (displayShape) { updateTexture(); }
@@ -136,29 +137,33 @@ void Game::Update(DX::StepTimer const& timer)
     
     if (mouse.leftButton)
     {  
-        //std::wstringstream oss;
-        //oss << mouse.x << "  " << mouse.y << "\n";
-        //oss << shape.triangle.left << "  " << shape.triangle.right << "\n";
-        //oss << shape.up << "  " << shape.bottom << "\n";
-        //std::wstring str = oss.str();
-        //OutputDebugStringW(str.c_str());
-        if (mouse.x >= shape.triangle.left && mouse.x < shape.triangle.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
+        /*std::wstringstream oss;
+        oss << mouse.x << "  " << mouse.y << "\n";
+        oss << shape.triangle.left << "  " << shape.triangle.right << "\n";
+        oss << shape.up << "  " << shape.bottom << "\n";
+        std::wstring str = oss.str();
+        OutputDebugStringW(str.c_str());*/
+        if (mouse.x >= button.triangle.left && mouse.x < button.triangle.right-20 && mouse.y >= button.up && mouse.y <= button.bottom)
         {          
-            shapeType = ShapeType::Triangle;
+            buttonType = ButtonType::Triangle;
             displayShape = true;
             updateTexture(/*(float)mouse.x, (float)mouse.y*/);
 
         }
-        if (mouse.x >= shape.square.left+10 && mouse.x < shape.square.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
+        if (mouse.x >= button.square.left+10 && mouse.x < button.square.right-20 && mouse.y >= button.up && mouse.y <= button.bottom)
         {
-            shapeType = ShapeType::Square;
+            buttonType = ButtonType::Square;
             displayShape = true;
             updateTexture();
         }
-        if (mouse.x >= shape.circle.left+10 && mouse.x < shape.circle.right-20 && mouse.y >= shape.up && mouse.y <= shape.bottom)
+        if (mouse.x >= button.screenshot.left+10 && mouse.x < button.screenshot.right-20 && mouse.y >= button.up && mouse.y <= button.bottom)
         {
-            shapeType = ShapeType::Circle;
-            displayShape = true;
+            takeScreenShot = true;
+            std::wstringstream oss;
+            oss << mouse.x << "  " << mouse.y << "\n";
+            oss  << " takeScreenShot=true  "  << "\n";
+            std::wstring str = oss.str();
+            OutputDebugStringW(str.c_str());
         }
     }
     
@@ -192,9 +197,9 @@ void Game::Render()
 
         //m_spriteBatch->Draw(m_background.Get(), m_fullscreenRect);
 
-        m_font->DrawString(m_spriteBatch.get(), L"Triangle", XMFLOAT2(shape.triangle.left, shape.up), Colors::GreenYellow);
-        m_font->DrawString(m_spriteBatch.get(), L"Square",   XMFLOAT2(shape.square.left, shape.up),   Colors::GreenYellow);
-        //m_font->DrawString(m_spriteBatch.get(), L"Circle",   XMFLOAT2(shape.circle.left, shape.up),   Colors::GreenYellow);
+        m_font->DrawString(m_spriteBatch.get(), L"Triangle", XMFLOAT2(button.triangle.left, button.up), Colors::GreenYellow);
+        m_font->DrawString(m_spriteBatch.get(), L"Square",   XMFLOAT2(button.square.left, button.up),   Colors::GreenYellow);
+        m_font->DrawString(m_spriteBatch.get(), L"Screenshot",   XMFLOAT2(button.screenshot.left, button.up),   Colors::GreenYellow);
 
         m_spriteBatch->End();
     }
@@ -219,7 +224,7 @@ void Game::Render()
 
         context->IASetInputLayout(m_inputLayout.Get());
 
-        if(shapeType==ShapeType::Triangle)
+        if(buttonType== ButtonType::Triangle)
         { 
             m_batch->Begin();
             VertexPositionTexture v1(Vector3(400.f, 150.f, 0.f), Vector2(0.5f,0));
@@ -229,7 +234,7 @@ void Game::Render()
             m_batch->End();
         }
         
-        if (shapeType == ShapeType::Square)
+        if (buttonType == ButtonType::Square)
         {
             m_batch->Begin();
             VertexPositionTexture v1(Vector3(200.f, 150.f, 0.f), Vector2(0, 0));
@@ -240,9 +245,30 @@ void Game::Render()
             m_batch->End();
         }
 
-        if (shapeType == ShapeType::Circle)
+        if (takeScreenShot)
         {
-           
+
+            takeScreenShot = false;
+            HRESULT hr;
+            ComPtr<ID3D11Texture2D> backBuffer;
+            hr = m_deviceResources->GetSwapChain()->GetBuffer(0, __uuidof(ID3D11Texture2D),
+                reinterpret_cast<LPVOID*>(backBuffer.GetAddressOf()));
+
+
+            wchar_t filename[] = L"\\screenshot.jpg";
+            wchar_t currDirBuffer[MAX_PATH];
+            GetCurrentDirectoryW(MAX_PATH, currDirBuffer);
+            wcscat_s(currDirBuffer,filename );
+            if(SUCCEEDED(hr))
+            {
+                hr = SaveWICTextureToFile(m_deviceResources->GetD3DDeviceContext(), backBuffer.Get(), GUID_ContainerFormatJpeg, 
+                    currDirBuffer );
+            }
+
+            /*std::wstringstream oss;
+            oss << " a screenshot should have been saved " << "\n";
+            std::wstring str = oss.str();
+            OutputDebugStringW(str.c_str());*/
         }
 
     }

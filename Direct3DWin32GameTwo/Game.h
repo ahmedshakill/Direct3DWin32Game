@@ -8,10 +8,9 @@
 #include "StepTimer.h"
 
 
-enum class ShapeType {
+enum class ButtonType {
     Triangle,
-    Square,
-    Circle
+    Square
 };
 
 class Triangle {
@@ -22,20 +21,20 @@ class Square {
 public:
     float left = 0.f, right = 0.f;
 };
-class Circle {
+class ScreenShot {
 public:
     float left = 0.f, right = 0.f;
 };
-class Shape {
+class Button {
 public:
    float left=0.f,bottom=0.f,width=0.f,up=0.f;
    Triangle triangle;
    Square square;
-   Circle circle;
-   Shape() {
+   ScreenShot screenshot;
+   Button() {
       
    }
-   Shape(float left, float ShapeWidth, float bottom)
+   Button(float left, float ShapeWidth, float bottom)
    {
        this->width = ShapeWidth;
        this->up = 100.0f;
@@ -45,8 +44,8 @@ public:
        triangle.right = triangle.left+width+10;
        square.left = triangle.right;
        square.right = square.left + width;
-       circle.left = square.right;
-       circle.right = circle.left + width;
+       screenshot.left = square.right;
+       screenshot.right = screenshot.left + width;
    }
 };
 
@@ -121,9 +120,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_background;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_triangle;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_quare;
-    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_circle;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>    m_screenshotbttn;
     //SpriteBatch
-    std::unique_ptr<DirectX::SpriteBatch>   m_spriteBatch;
+    std::unique_ptr<DirectX::SpriteBatch>               m_spriteBatch;
 
     //SpriteFont
     std::unique_ptr<DirectX::SpriteFont>             m_font;
@@ -141,8 +140,9 @@ private:
     wchar_t                                             szFile[260];
     bool                                                textureSelected = false;
     bool                                                displayShape = false;
-    ShapeType                                           shapeType;
-    Shape                                               shape;
+    bool                                                takeScreenShot = false;
+    ButtonType                                          buttonType;
+    Button                                              button;
     float                                               PI = 3.14159265358979323846;
     // Rendering loop timer.
     DX::StepTimer                           m_timer;
